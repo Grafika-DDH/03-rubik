@@ -16,7 +16,7 @@
 
 /* The number of our GLUT window */
 int window;
-float angle = 1;
+float angle = 0;
 
 /* rotation angle for the triangle. */
 float rtri = 0.0f;
@@ -160,6 +160,10 @@ void DrawGLScene()
               5, 5, 3,
               0, 1, 0);
 
+    glTranslatef(0.0f, 0.0f, -8.2f);
+    glRotatef(angle, 0.f, 1.f, 0.f);
+    glTranslatef(0.0f, 0.0f, 8.2f);
+
     float z = -6.0f;
 
     drawCubeAtPoint(-2.2f, 2.2f, z);
@@ -209,11 +213,27 @@ void keyPressed(unsigned char key, int x, int y)
     /* If escape is pressed, kill everything. */
     if (key == ESCAPE)
     {
-	/* shut down our window */
-	glutDestroyWindow(window);
+        /* shut down our window */
+        glutDestroyWindow(window);
 
-	/* exit the program...normal termination. */
-	exit(0);
+        /* exit the program...normal termination. */
+        exit(0);
+    } else if(key == 'p') {
+        int goal = 90;
+        int degree_per_frame = 5;
+        int frame = goal / degree_per_frame;
+        for(int i = 0; i < frame; i++) {
+          angle += 1;
+          DrawGLScene();
+        }
+    } else if(key == 'o') {
+        int goal = 90;
+        int degree_per_frame = 5;
+        int frame = goal / degree_per_frame;
+        for(int i = 0; i < frame; i++) {
+          angle -= 1;
+          DrawGLScene();
+        }
     }
 }
 
