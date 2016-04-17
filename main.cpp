@@ -24,6 +24,14 @@ float rtri = 0.0f;
 /* rotation angle for the quadrilateral. */
 float rquad = 0.0f;
 
+typedef struct {
+    float x, y, z;
+} Vertex3D;
+
+typedef struct {
+    float r, g, b;
+} Color3;
+
 /* A general OpenGL initialization function.  Sets all of the initial parameters. */
 void InitGL(int Width, int Height)	        // We call this right after our OpenGL window is created.
 {
@@ -39,6 +47,92 @@ void InitGL(int Width, int Height)	        // We call this right after our OpenG
   gluPerspective(45.0f,(GLfloat)Width/(GLfloat)Height,0.1f,100.0f);	// Calculate The Aspect Ratio Of The Window
 
   glMatrixMode(GL_MODELVIEW);
+}
+
+void drawBoxAtPoint(float x, float y, float z) {
+    glTranslatef(x,y,z);
+
+    glColor3f(0.5f,0.5f,1.0f);
+    glBegin(GL_QUADS);
+    glVertex3f(-1.0f, 1.0f, 0.0f);
+    glVertex3f( 1.0f, 1.0f, 0.0f);
+    glVertex3f( 1.0f,-1.0f, 0.0f);
+    glVertex3f(-1.0f,-1.0f, 0.0f);
+    glEnd();
+
+    glTranslatef(-x,-y,-z);
+}
+
+void drawSquare3d(Vertex3D vertex[4], Color3 color) {
+    glBegin(GL_TRIANGLE_STRIP);
+
+    glColor3f(color.r, color.g, color.b);
+
+    for(int i = 0; i < 4; ++i)
+        glVertex3f(vertex[i].x, vertex[i].y, vertex[i].z);
+
+    glEnd();
+}
+
+void drawCubeAtPoint(float x, float y, float z) {
+    float max = 1.0f;
+    float min = -max;
+    glTranslatef(x,y,z);
+
+    Vertex3D vertexSide1[4] = {
+        { min, min, max },
+        { max, min, max },
+        { min, max, max },
+        { max, max, max }
+    };
+
+    Vertex3D vertexSide2[4] = {
+        { min, min, min },
+        { max, min, min },
+        { min, max, min },
+        { max, max, min }
+    };
+
+    Vertex3D vertexSide3[4] = {
+        { min, min, min },
+        { min, max, min },
+        { min, min, max },
+        { min, max, max }
+    };
+
+    Vertex3D vertexSide4[4] = {
+        { max, min, min },
+        { max, max, min },
+        { max, min, max },
+        { max, max, max }
+    };
+
+    Vertex3D vertexSide5[4] = {
+        { min, min, min },
+        { min, min, max },
+        { max, min, min },
+        { max, min, max }
+    };
+
+    Vertex3D vertexSide6[4] = {
+        { min, max, min },
+        { min, max, max },
+        { max, max, min },
+        { max, max, max }
+    };
+
+    Color3 color1 = {0.5, 0, 0};
+    Color3 color2 = {0, 0.5, 0};
+    Color3 color3 = {0, 0, 0.5};
+
+    drawSquare3d(vertexSide1, color1);
+    drawSquare3d(vertexSide2, color1);
+    drawSquare3d(vertexSide3, color2);
+    drawSquare3d(vertexSide4, color2);
+    drawSquare3d(vertexSide5, color3);
+    drawSquare3d(vertexSide6, color3);
+
+    glTranslatef(-x,-y,-z);
 }
 
 /* The function called when our window is resized (which shouldn't happen, because we're fullscreen) */
@@ -59,45 +153,51 @@ void ReSizeGLScene(int Width, int Height)
 /* The main drawing function. */
 void DrawGLScene()
 {
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);		// Clear The Screen And The Depth Buffer
-  glLoadIdentity();				// Reset The View
-  glTranslatef(0.0f,0.0f,-8.0f);  // Move Right 3 Units, and back into the screen 6.0
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);		// Clear The Screen And The Depth Buffer
+    glLoadIdentity();				// Reset The View
 
-    gluLookAt(5, 5, 5,
-           1, 1, 0,
-           0, 1, 0);    // from = (5, 5, 5); to = (1, 1, 0)
+    gluLookAt(7, 7, 7,
+              5, 5, 3,
+              0, 1, 0);
 
+    float z = -6.0f;
 
-  glColor3f(0.5f,0.5f,1.0f);
-  glBegin(GL_QUADS);
-  glVertex3f(-1.0f, 1.0f, 0.0f);
-  glVertex3f( 1.0f, 1.0f, 0.0f);
-  glVertex3f( 1.0f,-1.0f, 0.0f);
-  glVertex3f(-1.0f,-1.0f, 0.0f);
-  glEnd();
+    drawCubeAtPoint(-2.2f, 2.2f, z);
+    drawCubeAtPoint(-2.2f, 0.f, z);
+    drawCubeAtPoint(-2.2f, -2.2f, z);
+    drawCubeAtPoint(0.f, 2.2f, z);
+    drawCubeAtPoint(0.f, 0.f, z);
+    drawCubeAtPoint(0.f, -2.2f, z);
+    drawCubeAtPoint(2.2f, 2.2f, z);
+    drawCubeAtPoint(2.2f, 0.f, z);
+    drawCubeAtPoint(2.2f, -2.2f, z);
 
-  glTranslatef(0.0f,-2.2f, 0.0f);  // Move Right 3 Units, and back into the screen 6.
+    z -= 2.2f;
 
-  glColor3f(0.5f,0.5f,1.0f);
-  glBegin(GL_QUADS);
-  glVertex3f(-1.0f, 1.0f, 0.0f);
-  glVertex3f( 1.0f, 1.0f, 0.0f);
-  glVertex3f( 1.0f,-1.0f, 0.0f);
-  glVertex3f(-1.0f,-1.0f, 0.0f);
-  glEnd();
+    drawCubeAtPoint(-2.2f, 2.2f, z);
+    drawCubeAtPoint(-2.2f, 0.f, z);
+    drawCubeAtPoint(-2.2f, -2.2f, z);
+    drawCubeAtPoint(0.f, 2.2f, z);
+    drawCubeAtPoint(0.f, 0.f, z);
+    drawCubeAtPoint(0.f, -2.2f, z);
+    drawCubeAtPoint(2.2f, 2.2f, z);
+    drawCubeAtPoint(2.2f, 0.f, z);
+    drawCubeAtPoint(2.2f, -2.2f, z);
 
-  glTranslatef(0.0f,4.4f,0.0f);  // Move Right 3 Units, and back into the screen 6.0
+    z -= 2.2f;
 
-  glColor3f(0.5f,0.5f,1.0f);
-  glBegin(GL_QUADS);
-  glVertex3f(-1.0f, 1.0f, 0.0f);
-  glVertex3f( 1.0f, 1.0f, 0.0f);
-  glVertex3f( 1.0f,-1.0f, 0.0f);
-  glVertex3f(-1.0f,-1.0f, 0.0f);
-  glEnd();
+    drawCubeAtPoint(-2.2f, 2.2f, z);
+    drawCubeAtPoint(-2.2f, 0.f, z);
+    drawCubeAtPoint(-2.2f, -2.2f, z);
+    drawCubeAtPoint(0.f, 2.2f, z);
+    drawCubeAtPoint(0.f, 0.f, z);
+    drawCubeAtPoint(0.f, -2.2f, z);
+    drawCubeAtPoint(2.2f, 2.2f, z);
+    drawCubeAtPoint(2.2f, 0.f, z);
+    drawCubeAtPoint(2.2f, -2.2f, z);
 
-  // swap the buffers to display, since double buffering is used.
-  glutSwapBuffers();
+    // swap the buffers to display, since double buffering is used.
+    glutSwapBuffers();
 }
 
 /* The function called whenever a key is pressed. */
