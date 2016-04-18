@@ -22,6 +22,11 @@
 
 /* GLUT callback Handlers */
 
+float rotateSpeed = 2.f;
+
+float viewX = 0.f, viewY = 0.f, viewZ = 0.f;
+float t_x, t_y;
+
 typedef struct Point {
     GLfloat x;
     GLfloat y;
@@ -56,16 +61,31 @@ static void resize(int width, int height)
     glLoadIdentity() ;
 }
 
+
+void motion(int x, int y) {
+    viewY += x - t_x;
+    viewX += y - t_y;
+    t_x = x;
+    t_y = y;
+    glutPostRedisplay();
+}
+
+void mouse_drag(int btn, int state, int x, int y) {
+    t_x = x;
+    t_y = y;
+}
+
+
 static void display(void)
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
 
     gluLookAt(10, 10, 10,
-              5, 5, 3,
+              4, 3, 3,
               0, 1, 0);
 
-    draw_cube();
+    draw_cube(viewX, viewY, viewZ);
 
     glutSwapBuffers();
 }
@@ -129,6 +149,8 @@ int main(int argc, char *argv[])
     glutDisplayFunc(display);
     glutKeyboardFunc(key);
     glutIdleFunc(idle);
+    glutMouseFunc(mouse_drag);
+    glutMotionFunc(motion);
 
     //glEnable(GL_CULL_FACE);
     //glCullFace(GL_FRONT);
@@ -136,10 +158,8 @@ int main(int argc, char *argv[])
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
 
-    glEnable(GL_LIGHT0);
     glEnable(GL_NORMALIZE);
     glEnable(GL_COLOR_MATERIAL);
-    glEnable(GL_LIGHTING);
 
     glutMainLoop();
 

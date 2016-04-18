@@ -372,17 +372,34 @@ int
     bottom[3][3] = {{4, 4, 4}, {4, 4, 4}, {4, 4, 4}},
     left[3][3] = {{5, 5, 5}, {5, 5, 5}, {5, 5, 5}};
 
-void draw_cube(){
-    polygon(back[1][1],0,1,2,3);
-    polygon(back[1][2],4,5,6,7);
-    polygon(back[1][0],8,9,10,11);
-    polygon(back[0][1],12,13,14,15);
-    polygon(back[2][1],16,17,18,19);
-    polygon(back[0][2],20,21,22,23);
-    polygon(back[0][0],24,25,26,27);
-    polygon(back[2][0],28,29,30,31);
-    polygon(back[2][2],32,33,34,35);
+void draw_cube(float viewX, float viewY, float viewZ) {
 
+    glRotatef(0.f + viewX, 1.f, 0.f, 0.f);
+    glRotatef(0.f + viewY, 0.f, 1.f, 0.f);
+    glRotatef(0.f + viewZ, 0.f, 0.f, 1.f);
+
+    draw_front_side_cube();
+    draw_left_side_cube();
+    draw_right_side_cube();
+    draw_back_side_cube();
+    draw_top_side_cube();
+    draw_bottom_side_cube();
+
+}
+
+void draw_front_side_cube() {
+    polygon(front[1][1],0,1,2,3);
+    polygon(front[1][2],4,5,6,7);
+    polygon(front[1][0],8,9,10,11);
+    polygon(front[0][1],12,13,14,15);
+    polygon(front[2][1],16,17,18,19);
+    polygon(front[0][0],20,21,22,23);
+    polygon(front[0][2],24,25,26,27);
+    polygon(front[2][2],28,29,30,31);
+    polygon(front[2][0],32,33,34,35);
+}
+
+void draw_right_side_cube() {
     polygon(right[1][1],36,37,38,39);
     polygon(right[1][2],40,41,42,43);
     polygon(right[1][0],44,45,46,47);
@@ -392,27 +409,33 @@ void draw_cube(){
     polygon(right[0][0],60,61,62,63);
     polygon(right[2][0],64,65,66,67);
     polygon(right[2][2],68,69,70,71);
+}
 
+void draw_left_side_cube() {
     polygon(left[1][1],72,73,74,75);
     polygon(left[1][2],76,77,78,79);
     polygon(left[1][0],80,81,82,83);
     polygon(left[0][1],84,85,86,87);
     polygon(left[2][1],88,89,90,91);
-    polygon(left[0][2],92,93,94,95);
-    polygon(left[0][0],96,97,98,99);
-    polygon(left[2][0],100,101,102,103);
-    polygon(left[2][2],104,105,106,107);
+    polygon(left[0][0],92,93,94,95);
+    polygon(left[0][2],96,97,98,99);
+    polygon(left[2][2],100,101,102,103);
+    polygon(left[2][0],104,105,106,107);
+}
 
-    polygon(front[1][1],108,109,110,111);
-    polygon(front[1][2],112,113,114,115);
-    polygon(front[1][0],116,117,118,119);
-    polygon(front[0][1],120,121,122,123);
-    polygon(front[2][1],124,125,126,127);
-    polygon(front[0][2],128,129,130,131);
-    polygon(front[0][0],132,133,134,135);
-    polygon(front[2][0],136,137,138,139);
-    polygon(front[2][2],140,141,142,143);
+void draw_back_side_cube() {
+    polygon(back[1][1],108,109,110,111);
+    polygon(back[1][2],112,113,114,115);
+    polygon(back[1][0],116,117,118,119);
+    polygon(back[0][1],120,121,122,123);
+    polygon(back[2][1],124,125,126,127);
+    polygon(back[0][0],128,129,130,131);
+    polygon(back[0][2],132,133,134,135);
+    polygon(back[2][2],136,137,138,139);
+    polygon(back[2][0],140,141,142,143);
+}
 
+void draw_top_side_cube() {
     polygon(top[1][1],144,145,146,147);
     polygon(top[1][2],148,149,150,151);
     polygon(top[1][0],152,153,154,155);
@@ -422,7 +445,9 @@ void draw_cube(){
     polygon(top[0][0],168,169,170,171);
     polygon(top[2][0],172,173,174,175);
     polygon(top[2][2],176,177,178,179);
+}
 
+void draw_bottom_side_cube() {
     polygon(bottom[1][1],180,181,182,183);
     polygon(bottom[1][2],184,185,186,187);
     polygon(bottom[1][0],188,189,190,191);
@@ -649,3 +674,6 @@ void rotateBack(){
     top[2][1] = temp2;
     top[2][0] = temp3;
 }
+
+
+
