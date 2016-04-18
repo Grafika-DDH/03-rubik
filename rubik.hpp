@@ -6,5 +6,11 @@
 #include <GL/glut.h>
 
 void draw_cube();
+void rotateTop();
+void rotateBottom();
+void rotateLeft();
+void rotateRight();
+void rotateFront();
+void rotateBack();
 
 #endif
