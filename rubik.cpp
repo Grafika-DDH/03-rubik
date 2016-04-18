@@ -63,17 +63,17 @@ GLfloat sisi[][3] = {
     {3.f,-1.f,1.f},
     {3.f,-1.f,-1.f},
 
-    // center left right
-    {3.f,1.f,1.f},
-    {3.f,1.f,3.f},
-    {3.f,-1.f,3.f},
-    {3.f,-1.f,1.f},
-
     // center right right
     {3.f,1.f,-3.f},
     {3.f,1.f,-1.f},
     {3.f,-1.f,-1.f},
     {3.f,-1.f,-3.f},
+
+    // center left right
+    {3.f,1.f,1.f},
+    {3.f,1.f,3.f},
+    {3.f,-1.f,3.f},
+    {3.f,-1.f,1.f},
 
     // center top right
     {3.f,3.f,-1.f},
@@ -119,17 +119,17 @@ GLfloat sisi[][3] = {
     {-3.f,-1.f,1.f},
     {-3.f,-1.f,-1.f},
 
-    // center left left
-    {-3.f,1.f,1.f},
-    {-3.f,1.f,3.f},
-    {-3.f,-1.f,3.f},
-    {-3.f,-1.f,1.f},
-
     // center right left
     {-3.f,1.f,-3.f},
     {-3.f,1.f,-1.f},
     {-3.f,-1.f,-1.f},
     {-3.f,-1.f,-3.f},
+
+    // center left left
+    {-3.f,1.f,1.f},
+    {-3.f,1.f,3.f},
+    {-3.f,-1.f,3.f},
+    {-3.f,-1.f,1.f},
 
     // center top left
     {-3.f,3.f,-1.f},
