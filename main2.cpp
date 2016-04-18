@@ -79,6 +79,30 @@ static void key(unsigned char key, int x, int y)
         case 'q':
             exit(0);
             break;
+        case 'w':
+        case 'W':
+            rotateTop();
+            break;
+        case 'a':
+        case 'A':
+            rotateLeft();
+            break;
+        case 'd':
+        case 'D':
+            rotateRight();
+            break;
+        case 's':
+        case 'S':
+            rotateBottom();
+            break;
+        case 'f':
+        case 'F':
+            rotateFront();
+            break;
+        case 'b':
+        case 'B':
+            rotateBack();
+            break;
     }
 
     glutPostRedisplay();
