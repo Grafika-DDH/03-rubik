@@ -42,7 +42,12 @@
 			<Add library="gdi32" />
 			<Add directory="C:/Program Files (x86)/CodeBlocks/MinGW/lib" />
 		</Linker>
+		<Unit filename="draw.cpp" />
+		<Unit filename="draw.hpp" />
 		<Unit filename="main.cpp" />
+		<Unit filename="main2.cpp" />
+		<Unit filename="rubik.cpp" />
+		<Unit filename="rubik.hpp" />
 		<Extensions>
 			<code_completion />
 			<envvars />
