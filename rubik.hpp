@@ -13,7 +13,7 @@ void rotateRight();
 void rotateFront();
 void rotateBack();
 
-void draw_cube(float viewX, float viewY, float viewZ);
+void draw_cube(float angle, float viewX, float viewY, float viewZ, int rotation);
 
 void draw_front_side_cube();
 void draw_left_side_cube();

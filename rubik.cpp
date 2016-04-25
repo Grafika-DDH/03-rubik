@@ -1,339 +1,394 @@
 #include "rubik.hpp"
 
+GLuint LoadTextureRAW( const char * filename, int wrap )
+{
+    GLuint texture;
+    int width, height;
+    BYTE * data;
+    FILE * file;
+
+    // open texture data
+    file = fopen( filename, "rb" );
+    if ( file == NULL ) return 0;
+
+    // allocate buffer
+    width = 256;
+    height = 256;
+    data = (BYTE *)malloc( width * height * 3 );
+
+    // read texture data
+    fread( data, width * height * 3, 1, file );
+    fclose( file );
+
+    // allocate a texture name
+    glGenTextures( 1, &texture );
+
+    // select our current texture
+    glBindTexture( GL_TEXTURE_2D, texture );
+
+    // select modulate to mix texture with color for shading
+    glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE );
+
+    // when texture area is small, bilinear filter the closest mipmap
+    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+                     GL_LINEAR_MIPMAP_NEAREST );
+    // when texture area is large, bilinear filter the first mipmap
+    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+
+    // if wrap is true, the texture wraps over at the edges (repeat)
+    //       ... false, the texture ends at the edges (clamp)
+    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
+                     wrap ? GL_REPEAT : GL_CLAMP );
+    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
+                     wrap ? GL_REPEAT : GL_CLAMP );
+
+    // build our texture mipmaps
+    gluBuild2DMipmaps( GL_TEXTURE_2D, 3, width, height,
+                       GL_RGB, GL_UNSIGNED_BYTE, data );
+
+    // free buffer
+    free( data );
+
+    return texture;
+}
+
+GLuint texture1;
+
 GLfloat sisi[][3] = {
-    // center back
-    {-1.f,1.f,-3.f},
-    {1.f,1.f,-3.f},
-    {1.f,-1.f,-3.f},
-    {-1.f,-1.f,-3.f},
-
-    // center right back
-    {1.f,1.f,-3.f},
-    {3.f,1.f,-3.f},
-    {3.f,-1.f,-3.f},
-    {1.f,-1.f,-3.f},
-
-    // center left back
-    {-3.f,1.f,-3.f},
-    {-1.f,1.f,-3.f},
-    {-1.f,-1.f,-3.f},
-    {-3.f,-1.f,-3.f},
-
-    // center top back
-    {-1.f,3.f,-3.f},
-    {1.f,3.f,-3.f},
-    {1.f,1.f,-3.f},
-    {-1.f,1.f,-3.f},
-
-    // center bottom back
-    {-1.f,-1.f,-3.f},
-    {1.f,-1.f,-3.f},
-    {1.f,-3.f,-3.f},
-    {-1.f,-3.f,-3.f},
-
-    // top right back
-    {1.f,3.f,-3.f},
-    {3.f,3.f,-3.f},
-    {3.f,1.f,-3.f},
-    {1.f,1.f,-3.f},
-
-    // top left back
-    {-3.f,3.f,-3.f},
-    {-1.f,3.f,-3.f},
-    {-1.f,1.f,-3.f},
-    {-3.f,1.f,-3.f},
-
-    // bottom left back
-    {-3.f,-1.f,-3.f},
-    {-1.f,-1.f,-3.f},
-    {-1.f,-3.f,-3.f},
-    {-3.f,-3.f,-3.f},
-
-    // bottom right back
-    {1.f,-1.f,-3.f},
-    {3.f,-1.f,-3.f},
-    {3.f,-3.f,-3.f},
-    {1.f,-3.f,-3.f},
-
-    ////////////////////////////////////
-
-    // center right
-    {3.f,1.f,-1.f},
-    {3.f,1.f,1.f},
-    {3.f,-1.f,1.f},
-    {3.f,-1.f,-1.f},
-
-    // center right right
-    {3.f,1.f,-3.f},
-    {3.f,1.f,-1.f},
-    {3.f,-1.f,-1.f},
-    {3.f,-1.f,-3.f},
-
-    // center left right
-    {3.f,1.f,1.f},
-    {3.f,1.f,3.f},
-    {3.f,-1.f,3.f},
-    {3.f,-1.f,1.f},
-
-    // center top right
-    {3.f,3.f,-1.f},
-    {3.f,3.f,1.f},
-    {3.f,1.f,1.f},
-    {3.f,1.f,-1.f},
-
-    // center bottom right
-    {3.f,-1.f,-1.f},
-    {3.f,-1.f,1.f},
-    {3.f,-3.f,1.f},
-    {3.f,-3.f,-1.f},
-
-    // top right right
-    {3.f,3.f,-3.f},
-    {3.f,3.f,-1.f},
-    {3.f,1.f,-1.f},
-    {3.f,1.f,-3.f},
-
-    // top left right
-    {3.f,3.f,1.f},
-    {3.f,3.f,3.f},
-    {3.f,1.f,3.f},
-    {3.f,1.f,1.f},
-
-    // bottom left right
-    {3.f,-1.f,1.f},
-    {3.f,-1.f,3.f},
-    {3.f,-3.f,3.f},
-    {3.f,-3.f,1.f},
-
-    // bottom right right
-    {3.f,-1.f,-3.f},
-    {3.f,-1.f,-1.f},
-    {3.f,-3.f,-1.f},
-    {3.f,-3.f,-3.f},
-
-    /////////////////////////////////
-
-    // center left
-    {-3.f,1.f,-1.f},
-    {-3.f,1.f,1.f},
-    {-3.f,-1.f,1.f},
-    {-3.f,-1.f,-1.f},
-
-    // center right left
-    {-3.f,1.f,-3.f},
-    {-3.f,1.f,-1.f},
-    {-3.f,-1.f,-1.f},
-    {-3.f,-1.f,-3.f},
-
-    // center left left
-    {-3.f,1.f,1.f},
-    {-3.f,1.f,3.f},
-    {-3.f,-1.f,3.f},
-    {-3.f,-1.f,1.f},
-
-    // center top left
-    {-3.f,3.f,-1.f},
-    {-3.f,3.f,1.f},
-    {-3.f,1.f,1.f},
-    {-3.f,1.f,-1.f},
-
-    // center bottom left
-    {-3.f,-1.f,-1.f},
-    {-3.f,-1.f,1.f},
-    {-3.f,-3.f,1.f},
-    {-3.f,-3.f,-1.f},
-
-    // top right left
-    {-3.f,3.f,-3.f},
-    {-3.f,3.f,-1.f},
-    {-3.f,1.f,-1.f},
-    {-3.f,1.f,-3.f},
-
-    // top left left
-    {-3.f,3.f,1.f},
-    {-3.f,3.f,3.f},
-    {-3.f,1.f,3.f},
-    {-3.f,1.f,1.f},
-
-    // bottom left left
-    {-3.f,-1.f,1.f},
-    {-3.f,-1.f,3.f},
-    {-3.f,-3.f,3.f},
-    {-3.f,-3.f,1.f},
-
-    // bottom right left
-    {-3.f,-1.f,-3.f},
-    {-3.f,-1.f,-1.f},
-    {-3.f,-3.f,-1.f},
-    {-3.f,-3.f,-3.f},
-
-    /////////////////////////////
-
-    // center front
-    {-1.f,1.f,3.f},
-    {1.f,1.f,3.f},
-    {1.f,-1.f,3.f},
-    {-1.f,-1.f,3.f},
-
-    // center right front
-    {1.f,1.f,3.f},
-    {3.f,1.f,3.f},
-    {3.f,-1.f,3.f},
-    {1.f,-1.f,3.f},
-
-    // center left front
-    {-3.f,1.f,3.f},
-    {-1.f,1.f,3.f},
-    {-1.f,-1.f,3.f},
-    {-3.f,-1.f,3.f},
-
-    // center top front
-    {-1.f,3.f,3.f},
-    {1.f,3.f,3.f},
-    {1.f,1.f,3.f},
-    {-1.f,1.f,3.f},
-
-    // center bottom front
-    {-1.f,-1.f,3.f},
-    {1.f,-1.f,3.f},
-    {1.f,-3.f,3.f},
-    {-1.f,-3.f,3.f},
-
-    // top right front
-    {1.f,3.f,3.f},
-    {3.f,3.f,3.f},
-    {3.f,1.f,3.f},
-    {1.f,1.f,3.f},
-
     // top left front
     {-3.f,3.f,3.f},
     {-1.f,3.f,3.f},
     {-1.f,1.f,3.f},
     {-3.f,1.f,3.f},
 
-    // bottom left front
+// center top front
+    {-1.f,3.f,3.f},
+    {1.f,3.f,3.f},
+    {1.f,1.f,3.f},
+    {-1.f,1.f,3.f},
+
+// top right front
+    {1.f,3.f,3.f},
+    {3.f,3.f,3.f},
+    {3.f,1.f,3.f},
+    {1.f,1.f,3.f},
+
+// center left front
+    {-3.f,1.f,3.f},
+    {-1.f,1.f,3.f},
+    {-1.f,-1.f,3.f},
+    {-3.f,-1.f,3.f},
+
+// center front
+    {-1.f,1.f,3.f},
+    {1.f,1.f,3.f},
+    {1.f,-1.f,3.f},
+    {-1.f,-1.f,3.f},
+
+// center right front
+    {1.f,1.f,3.f},
+    {3.f,1.f,3.f},
+    {3.f,-1.f,3.f},
+    {1.f,-1.f,3.f},
+
+// bottom left front
     {-3.f,-1.f,3.f},
     {-1.f,-1.f,3.f},
     {-1.f,-3.f,3.f},
     {-3.f,-3.f,3.f},
 
-    // bottom right front
+// center bottom front
+    {-1.f,-1.f,3.f},
+    {1.f,-1.f,3.f},
+    {1.f,-3.f,3.f},
+    {-1.f,-3.f,3.f},
+
+// bottom right front
     {1.f,-1.f,3.f},
     {3.f,-1.f,3.f},
     {3.f,-3.f,3.f},
     {1.f,-3.f,3.f},
 
-    ////////////////////////////
+//////
 
-    // center top
-    {-1.f,3.f,1.f},
-    {1.f,3.f,1.f},
-    {1.f,3.f,-1.f},
-    {-1.f,3.f,-1.f},
-
-    // center right top
-    {1.f,3.f,1.f},
-    {3.f,3.f,1.f},
-    {3.f,3.f,-1.f},
-    {1.f,3.f,-1.f},
-
-    // center left top
-    {-3.f,3.f,1.f},
-    {-1.f,3.f,1.f},
-    {-1.f,3.f,-1.f},
-    {-3.f,3.f,-1.f},
-
-    // center top top
-    {-1.f,3.f,-3.f},
-    {1.f,3.f,-3.f},
-    {1.f,3.f,-1.f},
-    {-1.f,3.f,-1.f},
-
-    // center bottom top
-    {-1.f,3.f,1.f},
-    {1.f,3.f,1.f},
-    {1.f,3.f,3.f},
-    {-1.f,3.f,3.f},
-
-    // top right top
-    {1.f,3.f,-3.f},
-    {3.f,3.f,-3.f},
-    {3.f,3.f,-1.f},
-    {1.f,3.f,-1.f},
-
-    // top left top
+// top left top
     {-3.f,3.f,-3.f},
     {-1.f,3.f,-3.f},
     {-1.f,3.f,-1.f},
     {-3.f,3.f,-1.f},
 
-    // bottom left top
+// center top top
+    {-1.f,3.f,-3.f},
+    {1.f,3.f,-3.f},
+    {1.f,3.f,-1.f},
+    {-1.f,3.f,-1.f},
+
+// top right top
+    {1.f,3.f,-3.f},
+    {3.f,3.f,-3.f},
+    {3.f,3.f,-1.f},
+    {1.f,3.f,-1.f},
+
+// center left top
+    {-3.f,3.f,1.f},
+    {-1.f,3.f,1.f},
+    {-1.f,3.f,-1.f},
+    {-3.f,3.f,-1.f},
+
+// center top
+    {-1.f,3.f,1.f},
+    {1.f,3.f,1.f},
+    {1.f,3.f,-1.f},
+    {-1.f,3.f,-1.f},
+
+// center right top
+    {1.f,3.f,1.f},
+    {3.f,3.f,1.f},
+    {3.f,3.f,-1.f},
+    {1.f,3.f,-1.f},
+
+// bottom left top
     {-3.f,3.f,1.f},
     {-1.f,3.f,1.f},
     {-1.f,3.f,3.f},
     {-3.f,3.f,3.f},
 
-    // bottom right top
+// center bottom top
+    {-1.f,3.f,1.f},
+    {1.f,3.f,1.f},
+    {1.f,3.f,3.f},
+    {-1.f,3.f,3.f},
+
+// bottom right top
     {1.f,3.f,1.f},
     {3.f,3.f,1.f},
     {3.f,3.f,3.f},
     {1.f,3.f,3.f},
 
-    /////////////////////////
+//////
 
-    // center bottom
-    {-1.f,-3.f,1.f},
-    {1.f,-3.f,1.f},
-    {1.f,-3.f,-1.f},
-    {-1.f,-3.f,-1.f},
-
-    // center right bottom
-    {1.f,-3.f,1.f},
-    {3.f,-3.f,1.f},
-    {3.f,-3.f,-1.f},
-    {1.f,-3.f,-1.f},
-
-    // center left bottom
-    {-3.f,-3.f,1.f},
-    {-1.f,-3.f,1.f},
-    {-1.f,-3.f,-1.f},
-    {-3.f,-3.f,-1.f},
-
-    // center top bottom
+// top left back
+    {-3.f,-1.f,-3.f},
+    {-1.f,-1.f,-3.f},
     {-1.f,-3.f,-3.f},
-    {1.f,-3.f,-3.f},
-    {1.f,-3.f,-1.f},
-    {-1.f,-3.f,-1.f},
-
-    // center bottom bottom
-    {-1.f,-3.f,1.f},
-    {1.f,-3.f,1.f},
-    {1.f,-3.f,3.f},
-    {-1.f,-3.f,3.f},
-
-    // top right bottom
-    {1.f,-3.f,-3.f},
-    {3.f,-3.f,-3.f},
-    {3.f,-3.f,-1.f},
-    {1.f,-3.f,-1.f},
-
-    // top left bottom
     {-3.f,-3.f,-3.f},
-    {-1.f,-3.f,-3.f},
-    {-1.f,-3.f,-1.f},
-    {-3.f,-3.f,-1.f},
 
-    // bottom left bottom
+// center top back
+    {-1.f,-1.f,-3.f},
+    {1.f,-1.f,-3.f},
+    {1.f,-3.f,-3.f},
+    {-1.f,-3.f,-3.f},
+
+// top right back
+    {1.f,-1.f,-3.f},
+    {3.f,-1.f,-3.f},
+    {3.f,-3.f,-3.f},
+    {1.f,-3.f,-3.f},
+
+// center left back
+    {-3.f,1.f,-3.f},
+    {-1.f,1.f,-3.f},
+    {-1.f,-1.f,-3.f},
+    {-3.f,-1.f,-3.f},
+
+// center back
+    {-1.f,1.f,-3.f},
+    {1.f,1.f,-3.f},
+    {1.f,-1.f,-3.f},
+    {-1.f,-1.f,-3.f},
+
+// center right back
+    {1.f,1.f,-3.f},
+    {3.f,1.f,-3.f},
+    {3.f,-1.f,-3.f},
+    {1.f,-1.f,-3.f},
+
+// bottom left back
+    {-3.f,3.f,-3.f},
+    {-1.f,3.f,-3.f},
+    {-1.f,1.f,-3.f},
+    {-3.f,1.f,-3.f},
+
+// center bottom back
+    {-1.f,3.f,-3.f},
+    {1.f,3.f,-3.f},
+    {1.f,1.f,-3.f},
+    {-1.f,1.f,-3.f},
+
+// bottom right back
+    {1.f,3.f,-3.f},
+    {3.f,3.f,-3.f},
+    {3.f,1.f,-3.f},
+    {1.f,1.f,-3.f},
+
+/////
+
+// top left bottom
     {-3.f,-3.f,1.f},
     {-1.f,-3.f,1.f},
     {-1.f,-3.f,3.f},
     {-3.f,-3.f,3.f},
 
-    // bottom right bottom
+// center top bottom
+    {-1.f,-3.f,1.f},
+    {1.f,-3.f,1.f},
+    {1.f,-3.f,3.f},
+    {-1.f,-3.f,3.f},
+
+// top right bottom
     {1.f,-3.f,1.f},
     {3.f,-3.f,1.f},
     {3.f,-3.f,3.f},
     {1.f,-3.f,3.f},
+
+// center left bottom
+    {-3.f,-3.f,1.f},
+    {-1.f,-3.f,1.f},
+    {-1.f,-3.f,-1.f},
+    {-3.f,-3.f,-1.f},
+
+// center bottom
+    {-1.f,-3.f,1.f},
+    {1.f,-3.f,1.f},
+    {1.f,-3.f,-1.f},
+    {-1.f,-3.f,-1.f},
+
+// center right bottom
+    {1.f,-3.f,1.f},
+    {3.f,-3.f,1.f},
+    {3.f,-3.f,-1.f},
+    {1.f,-3.f,-1.f},
+
+// bottom left bottom
+    {-3.f,-3.f,-3.f},
+    {-1.f,-3.f,-3.f},
+    {-1.f,-3.f,-1.f},
+    {-3.f,-3.f,-1.f},
+
+// center bottom bottom
+    {-1.f,-3.f,-3.f},
+    {1.f,-3.f,-3.f},
+    {1.f,-3.f,-1.f},
+    {-1.f,-3.f,-1.f},
+
+// bottom right bottom
+    {1.f,-3.f,-3.f},
+    {3.f,-3.f,-3.f},
+    {3.f,-3.f,-1.f},
+    {1.f,-3.f,-1.f},
+
+/////
+
+// top left left
+    {-3.f,3.f,-3.f},
+    {-3.f,3.f,-1.f},
+    {-3.f,1.f,-1.f},
+    {-3.f,1.f,-3.f},
+
+// center top left
+    {-3.f,3.f,-1.f},
+    {-3.f,3.f,1.f},
+    {-3.f,1.f,1.f},
+    {-3.f,1.f,-1.f},
+
+// top right left
+    {-3.f,3.f,1.f},
+    {-3.f,3.f,3.f},
+    {-3.f,1.f,3.f},
+    {-3.f,1.f,1.f},
+
+// center left left
+    {-3.f,1.f,-3.f},
+    {-3.f,1.f,-1.f},
+    {-3.f,-1.f,-1.f},
+    {-3.f,-1.f,-3.f},
+
+// center left
+    {-3.f,1.f,-1.f},
+    {-3.f,1.f,1.f},
+    {-3.f,-1.f,1.f},
+    {-3.f,-1.f,-1.f},
+
+// center right left
+    {-3.f,1.f,1.f},
+    {-3.f,1.f,3.f},
+    {-3.f,-1.f,3.f},
+    {-3.f,-1.f,1.f},
+
+// bottom left left
+    {-3.f,-1.f,-3.f},
+    {-3.f,-1.f,-1.f},
+    {-3.f,-3.f,-1.f},
+    {-3.f,-3.f,-3.f},
+
+// center bottom left
+    {-3.f,-1.f,-1.f},
+    {-3.f,-1.f,1.f},
+    {-3.f,-3.f,1.f},
+    {-3.f,-3.f,-1.f},
+
+// bottom right left
+    {-3.f,-1.f,1.f},
+    {-3.f,-1.f,3.f},
+    {-3.f,-3.f,3.f},
+    {-3.f,-3.f,1.f},
+
+/////
+
+// top left right
+    {3.f,3.f,1.f},
+    {3.f,3.f,3.f},
+    {3.f,1.f,3.f},
+    {3.f,1.f,1.f},
+
+// center top right
+    {3.f,3.f,-1.f},
+    {3.f,3.f,1.f},
+    {3.f,1.f,1.f},
+    {3.f,1.f,-1.f},
+
+// top right right
+    {3.f,3.f,-3.f},
+    {3.f,3.f,-1.f},
+    {3.f,1.f,-1.f},
+    {3.f,1.f,-3.f},
+
+// center left right
+    {3.f,1.f,1.f},
+    {3.f,1.f,3.f},
+    {3.f,-1.f,3.f},
+    {3.f,-1.f,1.f},
+
+// center right
+    {3.f,1.f,-1.f},
+    {3.f,1.f,1.f},
+    {3.f,-1.f,1.f},
+    {3.f,-1.f,-1.f},
+
+// center right right
+    {3.f,1.f,-3.f},
+    {3.f,1.f,-1.f},
+    {3.f,-1.f,-1.f},
+    {3.f,-1.f,-3.f},
+
+// bottom left right
+    {3.f,-1.f,1.f},
+    {3.f,-1.f,3.f},
+    {3.f,-3.f,3.f},
+    {3.f,-3.f,1.f},
+
+// center bottom right
+    {3.f,-1.f,-1.f},
+    {3.f,-1.f,1.f},
+    {3.f,-3.f,1.f},
+    {3.f,-3.f,-1.f},
+
+// bottom right right
+    {3.f,-1.f,-3.f},
+    {3.f,-1.f,-1.f},
+    {3.f,-3.f,-1.f},
+    {3.f,-3.f,-3.f},
+
 };
 
 GLfloat color[][3] = {
@@ -346,6 +401,15 @@ GLfloat color[][3] = {
 };
 
 void polygon(int indexColor, int a, int b, int c, int d) {
+
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, texture1);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE );
+
     glColor3f(0, 0, 0);
     glLineWidth(3.f);
     glBegin(GL_LINE_LOOP);
@@ -357,10 +421,10 @@ void polygon(int indexColor, int a, int b, int c, int d) {
 
     glColor3fv(color[indexColor]);
     glBegin(GL_POLYGON);
-    glVertex3fv(sisi[a]);
-    glVertex3fv(sisi[b]);
-    glVertex3fv(sisi[c]);
-    glVertex3fv(sisi[d]);
+    glTexCoord2d(0.0,0.0); glVertex3fv(sisi[a]);
+    glTexCoord2d(1.0,0.0); glVertex3fv(sisi[b]);
+    glTexCoord2d(1.0,1.0); glVertex3fv(sisi[c]);
+    glTexCoord2d(0.0,1.0); glVertex3fv(sisi[d]);
     glEnd();
 }
 
@@ -372,91 +436,488 @@ int
     bottom[3][3] = {{4, 4, 4}, {4, 4, 4}, {4, 4, 4}},
     left[3][3] = {{5, 5, 5}, {5, 5, 5}, {5, 5, 5}};
 
-void draw_cube(float viewX, float viewY, float viewZ) {
+void draw_cube(float angle, float viewX, float viewY, float viewZ, int rotation) {
+
+    texture1 = LoadTextureRAW("texture.raw",false);
 
     glRotatef(0.f + viewX, 1.f, 0.f, 0.f);
     glRotatef(0.f + viewY, 0.f, 1.f, 0.f);
     glRotatef(0.f + viewZ, 0.f, 0.f, 1.f);
 
-    draw_front_side_cube();
-    draw_left_side_cube();
-    draw_right_side_cube();
-    draw_back_side_cube();
-    draw_top_side_cube();
-    draw_bottom_side_cube();
+    switch (rotation) {
+        case 0:
+            draw_front_side_cube();
+            draw_left_side_cube();
+            draw_right_side_cube();
+            draw_back_side_cube();
+            draw_top_side_cube();
+            draw_bottom_side_cube();
+            break;
+
+        // Top Rotations
+        case 1:
+            draw_bottom_side_cube();
+
+            // front side cube
+            polygon(front[1][0],12,13,14,15);
+            polygon(front[1][1],16,17,18,19);
+            polygon(front[1][2],20,21,22,23);
+            polygon(front[2][0],24,25,26,27);
+            polygon(front[2][1],28,29,30,31);
+            polygon(front[2][2],32,33,34,35);
+
+            // left side cube
+            polygon(left[1][0],156,157,158,159);
+            polygon(left[1][1],160,161,162,163);
+            polygon(left[1][2],164,165,166,167);
+            polygon(left[2][0],168,169,170,171);
+            polygon(left[2][1],172,173,174,175);
+            polygon(left[2][2],176,177,178,179);
+
+            // right side cube
+            polygon(right[1][0],192,193,194,195);
+            polygon(right[1][1],196,197,198,199);
+            polygon(right[1][2],200,201,202,203);
+            polygon(right[2][0],204,205,206,207);
+            polygon(right[2][1],208,209,210,211);
+            polygon(right[2][2],212,213,214,215);
+
+            // back side cube
+            polygon(back[0][0],72,73,74,75);
+            polygon(back[0][1],76,77,78,79);
+            polygon(back[0][2],80,81,82,83);
+            polygon(back[1][0],84,85,86,87);
+            polygon(back[1][1],88,89,90,91);
+            polygon(back[1][2],92,93,94,95);
+
+            glPushMatrix();
+            glColor3fv(color[0]);
+            glPopMatrix();
+            glRotatef(-angle, 0.f, 1.f, 0.f);
+
+            // rotated front cube
+            polygon(front[0][0],0,1,2,3);
+            polygon(front[0][1],4,5,6,7);
+            polygon(front[0][2],8,9,10,11);
+
+            // rotated left cube
+            polygon(left[0][0],144,145,146,147);
+            polygon(left[0][1],148,149,150,151);
+            polygon(left[0][2],152,153,154,155);
+
+            // rotated right cube
+            polygon(right[0][0],180,181,182,183);
+            polygon(right[0][1],184,185,186,187);
+            polygon(right[0][2],188,189,190,191);
+
+            // rotated back cube
+            polygon(back[2][0],96,97,98,99);
+            polygon(back[2][1],100,101,102,103);
+            polygon(back[2][2],104,105,106,107);
+
+            // rotated top cube
+            draw_top_side_cube();
+            break;
+
+        // Bottom rotations
+        case 2:
+            draw_top_side_cube();
+
+            // front side cube
+            polygon(front[0][0],0,1,2,3);
+            polygon(front[0][1],4,5,6,7);
+            polygon(front[0][2],8,9,10,11);
+            polygon(front[1][0],12,13,14,15);
+            polygon(front[1][1],16,17,18,19);
+            polygon(front[1][2],20,21,22,23);
+            polygon(front[2][0],24,25,26,27);
+
+            // left side cube
+            polygon(left[0][0],144,145,146,147);
+            polygon(left[0][1],148,149,150,151);
+            polygon(left[0][2],152,153,154,155);
+            polygon(left[1][0],156,157,158,159);
+            polygon(left[1][1],160,161,162,163);
+            polygon(left[1][2],164,165,166,167);
+
+            // right side cube
+            polygon(right[0][0],180,181,182,183);
+            polygon(right[0][1],184,185,186,187);
+            polygon(right[0][2],188,189,190,191);
+            polygon(right[1][0],192,193,194,195);
+            polygon(right[1][1],196,197,198,199);
+            polygon(right[1][2],200,201,202,203);
+
+            // back side cube
+            polygon(back[1][0],84,85,86,87);
+            polygon(back[1][1],88,89,90,91);
+            polygon(back[1][2],92,93,94,95);
+            polygon(back[2][0],96,97,98,99);
+            polygon(back[2][1],100,101,102,103);
+            polygon(back[2][2],104,105,106,107);
+
+            glPushMatrix();
+            glColor3fv(color[0]);
+            glPopMatrix();
+            glRotatef(-angle, 0.f, 1.f, 0.f);
+
+            // rotated front cube
+            polygon(front[2][0],24,25,26,27);
+            polygon(front[2][1],28,29,30,31);
+            polygon(front[2][2],32,33,34,35);
+
+            // rotated left cube
+            polygon(left[2][0],168,169,170,171);
+            polygon(left[2][1],172,173,174,175);
+            polygon(left[2][2],176,177,178,179);
+
+            // rotated right cube
+            polygon(right[2][0],204,205,206,207);
+            polygon(right[2][1],208,209,210,211);
+            polygon(right[2][2],212,213,214,215);
+
+            // rotated back cube
+            polygon(back[0][0],72,73,74,75);
+            polygon(back[0][1],76,77,78,79);
+            polygon(back[0][2],80,81,82,83);
+
+            // rotated bottom cube
+            draw_bottom_side_cube();
+            break;
+
+        // Left rotations
+        case 3:
+            draw_right_side_cube();
+
+            // front side cube
+            polygon(front[0][1],4,5,6,7);
+            polygon(front[0][2],8,9,10,11);
+            polygon(front[1][1],16,17,18,19);
+            polygon(front[1][2],20,21,22,23);
+            polygon(front[2][1],28,29,30,31);
+            polygon(front[2][2],32,33,34,35);
+
+            // top side cube
+            polygon(top[0][1],40,41,42,43);
+            polygon(top[0][2],44,45,46,47);
+            polygon(top[1][1],52,53,54,55);
+            polygon(top[1][2],56,57,58,59);
+            polygon(top[2][1],64,65,66,67);
+            polygon(top[2][2],68,69,70,71);
+
+            // back side cube
+            polygon(back[0][1],76,77,78,79);
+            polygon(back[0][2],80,81,82,83);
+            polygon(back[1][1],88,89,90,91);
+            polygon(back[1][2],92,93,94,95);
+            polygon(back[2][1],100,101,102,103);
+            polygon(back[2][2],104,105,106,107);
+
+            // bottom side cube
+            polygon(bottom[0][1],112,113,114,115);
+            polygon(bottom[0][2],116,117,118,119);
+            polygon(bottom[1][1],124,125,126,127);
+            polygon(bottom[1][2],128,129,130,131);
+            polygon(bottom[2][1],136,137,138,139);
+            polygon(bottom[2][2],140,141,142,143);
+
+            glPushMatrix();
+            glColor3fv(color[0]);
+            glPopMatrix();
+            glRotatef(angle, 1.f, 0.f, 0.f);
+
+            // rotated front cube
+            polygon(front[0][0],0,1,2,3);
+            polygon(front[1][0],12,13,14,15);
+            polygon(front[2][0],24,25,26,27);
+
+            // rotated top cube
+            polygon(top[0][0],36,37,38,39);
+            polygon(top[1][0],48,49,50,51);
+            polygon(top[2][0],60,61,62,63);
+
+            // rotated back cube
+            polygon(back[0][0],72,73,74,75);
+            polygon(back[1][0],84,85,86,87);
+            polygon(back[2][0],96,97,98,99);
+
+            // rotated bottom cube
+            polygon(bottom[0][0],108,109,110,111);
+            polygon(bottom[1][0],120,121,122,123);
+            polygon(bottom[2][0],132,133,134,135);
+
+            // rotated left cube
+            draw_left_side_cube();
+            break;
+
+        // Right rotations
+        case 4:
+            draw_left_side_cube();
+
+            // front side cube
+            polygon(front[0][0],0,1,2,3);
+            polygon(front[0][1],4,5,6,7);
+            polygon(front[1][0],12,13,14,15);
+            polygon(front[1][1],16,17,18,19);
+            polygon(front[2][0],24,25,26,27);
+            polygon(front[2][1],28,29,30,31);
+
+            // top side cube
+            polygon(top[0][0],36,37,38,39);
+            polygon(top[0][1],40,41,42,43);
+            polygon(top[1][0],48,49,50,51);
+            polygon(top[1][1],52,53,54,55);
+            polygon(top[2][0],60,61,62,63);
+            polygon(top[2][1],64,65,66,67);
+
+            // back side cube
+            polygon(back[0][0],72,73,74,75);
+            polygon(back[0][1],76,77,78,79);
+            polygon(back[1][0],84,85,86,87);
+            polygon(back[1][1],88,89,90,91);
+            polygon(back[2][0],96,97,98,99);
+            polygon(back[2][1],100,101,102,103);
+
+            // bottom side cube
+            polygon(bottom[0][0],108,109,110,111);
+            polygon(bottom[0][1],112,113,114,115);
+            polygon(bottom[1][0],120,121,122,123);
+            polygon(bottom[1][1],124,125,126,127);
+            polygon(bottom[2][0],132,133,134,135);
+            polygon(bottom[2][1],136,137,138,139);
+
+            glPushMatrix();
+            glColor3fv(color[0]);
+            glPopMatrix();
+            glRotatef(-angle, 1.f, 0.f, 0.f);
+
+            // rotated front cube
+            polygon(front[0][2],8,9,10,11);
+            polygon(front[1][2],20,21,22,23);
+            polygon(front[2][2],32,33,34,35);
+
+            // rotated top cube
+            polygon(top[0][2],44,45,46,47);
+            polygon(top[1][2],56,57,58,59);
+            polygon(top[2][2],68,69,70,71);
+
+            // rotated back cube
+            polygon(back[0][2],80,81,82,83);
+            polygon(back[1][2],92,93,94,95);
+            polygon(back[2][2],104,105,106,107);
+
+            // rotated bottom cube
+            polygon(bottom[0][2],116,117,118,119);
+            polygon(bottom[1][2],128,129,130,131);
+            polygon(bottom[2][2],140,141,142,143);
+
+            // rotated left cube
+            draw_right_side_cube();
+            break;
+
+        // Front rotations
+        case 5:
+            draw_back_side_cube();
+
+            // top side cube
+            polygon(top[0][0],36,37,38,39);
+            polygon(top[0][1],40,41,42,43);
+            polygon(top[0][2],44,45,46,47);
+            polygon(top[1][0],48,49,50,51);
+            polygon(top[1][1],52,53,54,55);
+            polygon(top[1][2],56,57,58,59);
+
+            // bottom side cube
+            polygon(bottom[1][0],120,121,122,123);
+            polygon(bottom[1][1],124,125,126,127);
+            polygon(bottom[1][2],128,129,130,131);
+            polygon(bottom[2][0],132,133,134,135);
+            polygon(bottom[2][1],136,137,138,139);
+            polygon(bottom[2][2],140,141,142,143);
+
+            // left side cube
+            polygon(left[0][0],144,145,146,147);
+            polygon(left[0][1],148,149,150,151);
+            polygon(left[1][0],156,157,158,159);
+            polygon(left[1][1],160,161,162,163);
+            polygon(left[2][0],168,169,170,171);
+            polygon(left[2][1],172,173,174,175);
+
+            // right side cube
+            polygon(right[0][1],184,185,186,187);
+            polygon(right[0][2],188,189,190,191);
+            polygon(right[1][1],196,197,198,199);
+            polygon(right[1][2],200,201,202,203);
+            polygon(right[2][1],208,209,210,211);
+            polygon(right[2][2],212,213,214,215);
+
+            glPushMatrix();
+            glColor3fv(color[0]);
+            glPopMatrix();
+            glRotatef(-angle, 0.f, 0.f, 1.f);
+
+            // rotated top cube
+            polygon(top[2][0],60,61,62,63);
+            polygon(top[2][1],64,65,66,67);
+            polygon(top[2][2],68,69,70,71);
+
+            // rotated bottom cube
+            polygon(bottom[0][0],108,109,110,111);
+            polygon(bottom[0][1],112,113,114,115);
+            polygon(bottom[0][2],116,117,118,119);
+
+            // rotated left cube
+            polygon(left[0][2],152,153,154,155);
+            polygon(left[1][2],164,165,166,167);
+            polygon(left[2][2],176,177,178,179);
+
+            // rotated right cube
+            polygon(right[0][0],180,181,182,183);
+            polygon(right[1][0],192,193,194,195);
+            polygon(right[2][0],204,205,206,207);
+
+            // rotated left cube
+            draw_front_side_cube();
+            break;
+
+        // Back rotations
+        case 6:
+            draw_front_side_cube();
+
+            // top side cube
+            polygon(top[1][0],48,49,50,51);
+            polygon(top[1][1],52,53,54,55);
+            polygon(top[1][2],56,57,58,59);
+            polygon(top[2][0],60,61,62,63);
+            polygon(top[2][1],64,65,66,67);
+            polygon(top[2][2],68,69,70,71);
+
+            // bottom side cube
+            polygon(bottom[0][0],108,109,110,111);
+            polygon(bottom[0][1],112,113,114,115);
+            polygon(bottom[0][2],116,117,118,119);
+            polygon(bottom[1][0],120,121,122,123);
+            polygon(bottom[1][1],124,125,126,127);
+            polygon(bottom[1][2],128,129,130,131);
+
+            // left side cube
+            polygon(left[0][1],148,149,150,151);
+            polygon(left[0][2],152,153,154,155);
+            polygon(left[1][1],160,161,162,163);
+            polygon(left[1][2],164,165,166,167);
+            polygon(left[2][1],172,173,174,175);
+            polygon(left[2][2],176,177,178,179);
+
+            // right side cube
+            polygon(right[0][0],180,181,182,183);
+            polygon(right[0][1],184,185,186,187);
+            polygon(right[1][0],192,193,194,195);
+            polygon(right[1][1],196,197,198,199);
+            polygon(right[2][0],204,205,206,207);
+            polygon(right[2][1],208,209,210,211);
+
+            glPushMatrix();
+            glColor3fv(color[0]);
+            glPopMatrix();
+            glRotatef(-angle, 0.f, 0.f, 1.f);
+
+            // rotated top cube
+            polygon(top[0][0],36,37,38,39);
+            polygon(top[0][1],40,41,42,43);
+            polygon(top[0][2],44,45,46,47);
+
+            // rotated bottom cube
+            polygon(bottom[2][0],132,133,134,135);
+            polygon(bottom[2][1],136,137,138,139);
+            polygon(bottom[2][2],140,141,142,143);
+
+            // rotated left cube
+            polygon(left[0][0],144,145,146,147);
+            polygon(left[1][0],156,157,158,159);
+            polygon(left[2][0],168,169,170,171);
+
+            // rotated right cube
+            polygon(right[0][2],188,189,190,191);
+            polygon(right[1][2],200,201,202,203);
+            polygon(right[2][2],212,213,214,215);
+
+            // rotated left cube
+            draw_back_side_cube();
+            break;
+    }
 
 }
 
 void draw_front_side_cube() {
-    polygon(front[1][1],0,1,2,3);
-    polygon(front[1][2],4,5,6,7);
-    polygon(front[1][0],8,9,10,11);
-    polygon(front[0][1],12,13,14,15);
-    polygon(front[2][1],16,17,18,19);
-    polygon(front[0][0],20,21,22,23);
-    polygon(front[0][2],24,25,26,27);
-    polygon(front[2][2],28,29,30,31);
-    polygon(front[2][0],32,33,34,35);
-}
-
-void draw_right_side_cube() {
-    polygon(right[1][1],36,37,38,39);
-    polygon(right[1][2],40,41,42,43);
-    polygon(right[1][0],44,45,46,47);
-    polygon(right[0][1],48,49,50,51);
-    polygon(right[2][1],52,53,54,55);
-    polygon(right[0][2],56,57,58,59);
-    polygon(right[0][0],60,61,62,63);
-    polygon(right[2][0],64,65,66,67);
-    polygon(right[2][2],68,69,70,71);
-}
-
-void draw_left_side_cube() {
-    polygon(left[1][1],72,73,74,75);
-    polygon(left[1][2],76,77,78,79);
-    polygon(left[1][0],80,81,82,83);
-    polygon(left[0][1],84,85,86,87);
-    polygon(left[2][1],88,89,90,91);
-    polygon(left[0][0],92,93,94,95);
-    polygon(left[0][2],96,97,98,99);
-    polygon(left[2][2],100,101,102,103);
-    polygon(left[2][0],104,105,106,107);
-}
-
-void draw_back_side_cube() {
-    polygon(back[1][1],108,109,110,111);
-    polygon(back[1][2],112,113,114,115);
-    polygon(back[1][0],116,117,118,119);
-    polygon(back[0][1],120,121,122,123);
-    polygon(back[2][1],124,125,126,127);
-    polygon(back[0][0],128,129,130,131);
-    polygon(back[0][2],132,133,134,135);
-    polygon(back[2][2],136,137,138,139);
-    polygon(back[2][0],140,141,142,143);
+    polygon(front[0][0],0,1,2,3);
+    polygon(front[0][1],4,5,6,7);
+    polygon(front[0][2],8,9,10,11);
+    polygon(front[1][0],12,13,14,15);
+    polygon(front[1][1],16,17,18,19);
+    polygon(front[1][2],20,21,22,23);
+    polygon(front[2][0],24,25,26,27);
+    polygon(front[2][1],28,29,30,31);
+    polygon(front[2][2],32,33,34,35);
 }
 
 void draw_top_side_cube() {
-    polygon(top[1][1],144,145,146,147);
-    polygon(top[1][2],148,149,150,151);
-    polygon(top[1][0],152,153,154,155);
-    polygon(top[0][1],156,157,158,159);
-    polygon(top[2][1],160,161,162,163);
-    polygon(top[0][2],164,165,166,167);
-    polygon(top[0][0],168,169,170,171);
-    polygon(top[2][0],172,173,174,175);
-    polygon(top[2][2],176,177,178,179);
+    polygon(top[0][0],36,37,38,39);
+    polygon(top[0][1],40,41,42,43);
+    polygon(top[0][2],44,45,46,47);
+    polygon(top[1][0],48,49,50,51);
+    polygon(top[1][1],52,53,54,55);
+    polygon(top[1][2],56,57,58,59);
+    polygon(top[2][0],60,61,62,63);
+    polygon(top[2][1],64,65,66,67);
+    polygon(top[2][2],68,69,70,71);
+}
+
+void draw_back_side_cube() {
+    polygon(back[0][0],72,73,74,75);
+    polygon(back[0][1],76,77,78,79);
+    polygon(back[0][2],80,81,82,83);
+    polygon(back[1][0],84,85,86,87);
+    polygon(back[1][1],88,89,90,91);
+    polygon(back[1][2],92,93,94,95);
+    polygon(back[2][0],96,97,98,99);
+    polygon(back[2][1],100,101,102,103);
+    polygon(back[2][2],104,105,106,107);
 }
 
 void draw_bottom_side_cube() {
-    polygon(bottom[1][1],180,181,182,183);
-    polygon(bottom[1][2],184,185,186,187);
-    polygon(bottom[1][0],188,189,190,191);
-    polygon(bottom[0][1],192,193,194,195);
-    polygon(bottom[2][1],196,197,198,199);
-    polygon(bottom[0][2],200,201,202,203);
-    polygon(bottom[0][0],204,205,206,207);
-    polygon(bottom[2][0],208,209,210,211);
-    polygon(bottom[2][2],212,213,214,215);
+    polygon(bottom[0][0],108,109,110,111);
+    polygon(bottom[0][1],112,113,114,115);
+    polygon(bottom[0][2],116,117,118,119);
+    polygon(bottom[1][0],120,121,122,123);
+    polygon(bottom[1][1],124,125,126,127);
+    polygon(bottom[1][2],128,129,130,131);
+    polygon(bottom[2][0],132,133,134,135);
+    polygon(bottom[2][1],136,137,138,139);
+    polygon(bottom[2][2],140,141,142,143);
+}
+
+void draw_left_side_cube() {
+    polygon(left[0][0],144,145,146,147);
+    polygon(left[0][1],148,149,150,151);
+    polygon(left[0][2],152,153,154,155);
+    polygon(left[1][0],156,157,158,159);
+    polygon(left[1][1],160,161,162,163);
+    polygon(left[1][2],164,165,166,167);
+    polygon(left[2][0],168,169,170,171);
+    polygon(left[2][1],172,173,174,175);
+    polygon(left[2][2],176,177,178,179);
+}
+
+void draw_right_side_cube() {
+    polygon(right[0][0],180,181,182,183);
+    polygon(right[0][1],184,185,186,187);
+    polygon(right[0][2],188,189,190,191);
+    polygon(right[1][0],192,193,194,195);
+    polygon(right[1][1],196,197,198,199);
+    polygon(right[1][2],200,201,202,203);
+    polygon(right[2][0],204,205,206,207);
+    polygon(right[2][1],208,209,210,211);
+    polygon(right[2][2],212,213,214,215);
 }
 
 void rotateTop(){
@@ -468,11 +929,11 @@ void rotateTop(){
     top[2][2] = top[0][2];
     top[0][2] = temp;
 
-    temp = top[1][0];
+    temp = top[0][1];
+    top[0][1] = top[1][0];
     top[1][0] = top[2][1];
     top[2][1] = top[1][2];
-    top[1][2] = top[0][1];
-    top[0][1] = temp;
+    top[1][2] = temp;
 
     int temp1 = front[0][0];
     int temp2 = front[0][1];
@@ -482,13 +943,13 @@ void rotateTop(){
     front[0][1] = right[0][1];
     front[0][2] = right[0][2];
 
-    right[0][0] = back[0][2];
-    right[0][1] = back[0][1];
-    right[0][2] = back[0][0];
+    right[0][0] = back[2][2];
+    right[0][1] = back[2][1];
+    right[0][2] = back[2][0];
 
-    back[0][2] = left[0][2];
-    back[0][1] = left[0][1];
-    back[0][0] = left[0][0];
+    back[2][2] = left[0][0];
+    back[2][1] = left[0][1];
+    back[2][0] = left[0][2];
 
     left[0][0] = temp3;
     left[0][1] = temp2;
@@ -499,16 +960,16 @@ void rotateBottom(){
     int temp;
 
     temp = bottom[0][0];
-    bottom[0][0] = bottom[2][0];
-    bottom[2][0] = bottom[2][2];
-    bottom[2][2] = bottom[0][2];
-    bottom[0][2] = temp;
+    bottom[0][0] = bottom[0][2];
+    bottom[0][2] = bottom[2][2];
+    bottom[2][2] = bottom[2][0];
+    bottom[2][0] = temp;
 
-    temp = bottom[1][0];
-    bottom[1][0] = bottom[2][1];
-    bottom[2][1] = bottom[1][2];
-    bottom[1][2] = bottom[0][1];
-    bottom[0][1] = temp;
+    temp = bottom[0][1];
+    bottom[0][1] = bottom[1][2];
+    bottom[1][2] = bottom[2][1];
+    bottom[2][1] = bottom[1][0];
+    bottom[1][0] = temp;
 
     int temp1 = front[2][0];
     int temp2 = front[2][1];
@@ -518,17 +979,17 @@ void rotateBottom(){
     front[2][1] = right[2][1];
     front[2][2] = right[2][2];
 
-    right[2][0] = back[2][2];
-    right[2][1] = back[2][1];
-    right[2][2] = back[2][0];
+    right[2][0] = back[0][2];
+    right[2][1] = back[0][1];
+    right[2][2] = back[0][0];
 
-    back[2][2] = left[2][2];
-    back[2][1] = left[2][1];
-    back[2][0] = left[2][0];
+    back[0][2] = left[2][0];
+    back[0][1] = left[2][1];
+    back[0][0] = left[2][2];
 
-    left[2][2] = temp1;
+    left[2][0] = temp1;
     left[2][1] = temp2;
-    left[2][0] = temp3;
+    left[2][2] = temp3;
 }
 
 void rotateRight(){
@@ -540,11 +1001,11 @@ void rotateRight(){
     right[2][2] = right[0][2];
     right[0][2] = temp;
 
-    temp = right[1][0];
+    temp = right[0][1];
+    right[0][1] = right[1][0];
     right[1][0] = right[2][1];
     right[2][1] = right[1][2];
-    right[1][2] = right[0][1];
-    right[0][1] = temp;
+    right[1][2] = temp;
 
     int temp1 = top[0][2];
     int temp2 = top[1][2];
@@ -554,17 +1015,17 @@ void rotateRight(){
     top[1][2] = front[1][2];
     top[2][2] = front[2][2];
 
-    front[0][2] = bottom[2][2];
+    front[0][2] = bottom[0][2];
     front[1][2] = bottom[1][2];
-    front[2][2] = bottom[0][2];
+    front[2][2] = bottom[2][2];
 
-    bottom[2][2] = back[2][2];
-    bottom[1][2] = back[1][2];
     bottom[0][2] = back[0][2];
+    bottom[1][2] = back[1][2];
+    bottom[2][2] = back[2][2];
 
-    back[2][2] = temp3;
+    back[0][2] = temp3;
     back[1][2] = temp2;
-    back[0][2] = temp1;
+    back[2][2] = temp1;
 }
 
 void rotateLeft(){
@@ -576,11 +1037,11 @@ void rotateLeft(){
     left[2][2] = left[0][2];
     left[0][2] = temp;
 
-    temp = left[1][0];
+    temp = left[0][1];
+    left[0][1] = left[1][0];
     left[1][0] = left[2][1];
     left[2][1] = left[1][2];
-    left[1][2] = left[0][1];
-    left[0][1] = temp;
+    left[1][2] = temp;
 
     int temp1 = front[0][0];
     int temp2 = front[1][0];
@@ -590,13 +1051,13 @@ void rotateLeft(){
     front[1][0] = top[1][0];
     front[2][0] = top[2][0];
 
-    top[0][0] = back[2][2];
-    top[1][0] = back[1][2];
-    top[2][0] = back[0][2];
+    top[0][0] = back[0][0];
+    top[1][0] = back[1][0];
+    top[2][0] = back[2][0];
 
-    back[2][2] = bottom[0][0];
-    back[1][2] = bottom[1][0];
-    back[0][2] = bottom[2][0];
+    back[0][0] = bottom[0][0];
+    back[1][0] = bottom[1][0];
+    back[2][0] = bottom[2][0];
 
     bottom[0][0] = temp1;
     bottom[1][0] = temp2;
@@ -606,57 +1067,25 @@ void rotateLeft(){
 void rotateFront(){
     int temp;
 
-    temp = back[0][0];
-    back[0][0] = back[2][0];
-    back[2][0] = back[2][2];
-    back[2][2] = back[0][2];
-    back[0][2] = temp;
-
-    temp = back[1][0];
-    back[1][0] = back[2][1];
-    back[2][1] = back[1][2];
-    back[1][2] = back[0][1];
-    back[0][1] = temp;
-
-    int temp1 = top[0][0];
-    int temp2 = top[0][1];
-    int temp3 = top[0][2];
-
-    top[0][0] = right[0][2];
-    top[0][1] = right[1][2];
-    top[0][2] = right[2][2];
-
-    right[0][2] = bottom[2][2];
-    right[1][2] = bottom[2][1];
-    right[2][2] = bottom[2][0];
-
-    bottom[2][2] = left[2][0];
-    bottom[2][1] = left[1][0];
-    bottom[2][0] = left[0][0];
-
-    left[2][0] = temp1;
-    left[1][0] = temp2;
-    left[0][0] = temp3;
-}
-
-void rotateBack(){
-    int temp;
-
     temp = front[0][0];
     front[0][0] = front[2][0];
     front[2][0] = front[2][2];
     front[2][2] = front[0][2];
     front[0][2] = temp;
 
-    temp = front[1][0];
+    temp = front[0][1];
+    front[0][1] = front[1][0];
     front[1][0] = front[2][1];
     front[2][1] = front[1][2];
-    front[1][2] = front[0][1];
-    front[0][1] = temp;
+    front[1][2] = temp;
 
-    int temp1 = left[0][2];
-    int temp2 = left[1][2];
-    int temp3 = left[2][2];
+    int temp1 = top[2][0];
+    int temp2 = top[2][1];
+    int temp3 = top[2][2];
+
+    top[2][0] = left[0][2];
+    top[2][1] = left[1][2];
+    top[2][2] = left[2][2];
 
     left[0][2] = bottom[0][0];
     left[1][2] = bottom[0][1];
@@ -666,13 +1095,45 @@ void rotateBack(){
     bottom[0][1] = right[1][0];
     bottom[0][2] = right[0][0];
 
-    right[2][0] = top[2][2];
-    right[1][0] = top[2][1];
-    right[0][0] = top[2][0];
+    right[2][0] = temp1;
+    right[1][0] = temp2;
+    right[0][0] = temp3;
+}
 
-    top[2][2] = temp1;
-    top[2][1] = temp2;
-    top[2][0] = temp3;
+void rotateBack(){
+    int temp;
+
+    temp = back[0][0];
+    back[0][0] = back[0][2];
+    back[0][2] = back[2][2];
+    back[2][2] = back[2][0];
+    back[2][0] = temp;
+
+    temp = back[0][1];
+    back[0][1] = back[1][2];
+    back[1][2] = back[2][1];
+    back[2][1] = back[1][0];
+    back[1][0] = temp;
+
+    int temp1 = left[0][0];
+    int temp2 = left[1][0];
+    int temp3 = left[2][0];
+
+    left[0][0] = bottom[2][0];
+    left[1][0] = bottom[2][1];
+    left[2][0] = bottom[2][2];
+
+    bottom[2][0] = right[2][2];
+    bottom[2][1] = right[1][2];
+    bottom[2][2] = right[0][2];
+
+    right[2][2] = top[0][2];
+    right[1][2] = top[0][1];
+    right[0][2] = top[0][0];
+
+    top[0][2] = temp1;
+    top[0][1] = temp2;
+    top[0][0] = temp3;
 }
 
 
