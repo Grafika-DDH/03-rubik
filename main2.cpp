@@ -22,10 +22,16 @@
 
 /* GLUT callback Handlers */
 
-float rotateSpeed = 2.f;
+float rotateSpeed = 0.5f;
 
 float viewX = 0.f, viewY = 0.f, viewZ = 0.f;
 float t_x, t_y;
+
+float theta = 0.f;
+bool isKeyPressed = false;
+int rotation = 0;
+int complete = 0;
+float angle = 0.f;
 
 typedef struct Point {
     GLfloat x;
@@ -85,14 +91,66 @@ static void display(void)
               4, 3, 3,
               0, 1, 0);
 
-    draw_cube(viewX, viewY, viewZ);
+    draw_cube(angle, viewX, viewY, viewZ, rotation);
 
     glutSwapBuffers();
 }
 
 
+void rotate_cube()
+{
+    if (!isKeyPressed)
+        return;
+
+    angle += 0.005 + rotateSpeed;
+    while (angle >= 360.f)
+        angle -= 360.f;
+
+    if (angle < 90.f) {
+        glutPostRedisplay();
+        return;
+    }
+
+    complete = 1;
+    glutIdleFunc(NULL);
+
+    switch (rotation)
+    {
+        case 1:
+            rotateTop();
+            break;
+        case 3:
+            rotateLeft();
+            break;
+        case 4:
+            rotateRight();
+            break;
+        case 2:
+            rotateBottom();
+            break;
+        case 5:
+            rotateFront();
+            break;
+        case 6:
+            rotateBack();
+            break;
+    }
+
+    rotation = 0;
+    angle = 0;
+    isKeyPressed = false;
+
+    glutPostRedisplay();
+}
+
 static void key(unsigned char key, int x, int y)
 {
+    if (isKeyPressed)
+        return;
+
+    isKeyPressed = true;
+
+    glutPostRedisplay();
     switch (key)
     {
         case 27 :
@@ -101,32 +159,34 @@ static void key(unsigned char key, int x, int y)
             break;
         case 'w':
         case 'W':
-            rotateTop();
+            rotation = 1;
             break;
         case 'a':
         case 'A':
-            rotateLeft();
+            rotation = 3;
             break;
         case 'd':
         case 'D':
-            rotateRight();
+            rotation = 4;
             break;
         case 's':
         case 'S':
-            rotateBottom();
+            rotation = 2;
             break;
         case 'f':
         case 'F':
-            rotateFront();
+            rotation = 5;
             break;
         case 'b':
         case 'B':
-            rotateBack();
+            rotation = 6;
             break;
     }
 
-    glutPostRedisplay();
+    complete = 0;
+    glutIdleFunc(rotate_cube);
 }
+
 
 static void idle(void)
 {
@@ -148,7 +208,7 @@ int main(int argc, char *argv[])
     glutReshapeFunc(resize);
     glutDisplayFunc(display);
     glutKeyboardFunc(key);
-    glutIdleFunc(idle);
+    glutIdleFunc(rotate_cube);
     glutMouseFunc(mouse_drag);
     glutMotionFunc(motion);
 
