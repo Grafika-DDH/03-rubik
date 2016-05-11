@@ -422,6 +422,11 @@ void draw_cube(float angle, float viewX, float viewY, float viewZ, int rotation)
 	glMaterialfv(GL_FRONT, GL_SPECULAR, qaWhite);
 	glMaterialf(GL_FRONT, GL_SHININESS, 60.0);
 
+	glMaterialfv(GL_RIGHT, GL_AMBIENT, qaGreen);
+	glMaterialfv(GL_RIGHT, GL_DIFFUSE, qaGreen);
+	glMaterialfv(GL_RIGHT, GL_SPECULAR, qaWhite);
+	glMaterialf(GL_RIGHT, GL_SHININESS, 60.0);
+
     glRotatef(0.f + viewX, 1.f, 0.f, 0.f);
     glRotatef(0.f + viewY, 0.f, 1.f, 0.f);
     glRotatef(0.f + viewZ, 0.f, 0.f, 1.f);
@@ -831,6 +836,7 @@ void draw_cube(float angle, float viewX, float viewY, float viewZ, int rotation)
 }
 
 void draw_front_side_cube() {
+    glNormal3f(0.0f, 0.0f, 1.0f);
     polygon(front[0][0],0,1,2,3);
     polygon(front[0][1],4,5,6,7);
     polygon(front[0][2],8,9,10,11);
@@ -843,6 +849,7 @@ void draw_front_side_cube() {
 }
 
 void draw_top_side_cube() {
+    glNormal3f(0.0f, 1.0f, 0.0f);
     polygon(top[0][0],36,37,38,39);
     polygon(top[0][1],40,41,42,43);
     polygon(top[0][2],44,45,46,47);
@@ -855,6 +862,7 @@ void draw_top_side_cube() {
 }
 
 void draw_back_side_cube() {
+    glNormal3f(0.0f, 0.0f, -1.0f);
     polygon(back[0][0],72,73,74,75);
     polygon(back[0][1],76,77,78,79);
     polygon(back[0][2],80,81,82,83);
@@ -867,6 +875,7 @@ void draw_back_side_cube() {
 }
 
 void draw_bottom_side_cube() {
+    glNormal3f(.0f, -1.0f, 0.0f);
     polygon(bottom[0][0],108,109,110,111);
     polygon(bottom[0][1],112,113,114,115);
     polygon(bottom[0][2],116,117,118,119);
@@ -879,6 +888,7 @@ void draw_bottom_side_cube() {
 }
 
 void draw_left_side_cube() {
+    glNormal3f(-1.0f, 0.0f, 0.0f);
     polygon(left[0][0],144,145,146,147);
     polygon(left[0][1],148,149,150,151);
     polygon(left[0][2],152,153,154,155);
@@ -891,6 +901,7 @@ void draw_left_side_cube() {
 }
 
 void draw_right_side_cube() {
+    glNormal3f(1.0f, 0.0f, 0.0f);
     polygon(right[0][0],180,181,182,183);
     polygon(right[0][1],184,185,186,187);
     polygon(right[0][2],188,189,190,191);

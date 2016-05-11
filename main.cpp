@@ -202,8 +202,26 @@ void InitializeLight() {
 	glLightfv(GL_LIGHT0, GL_SPECULAR, qaSpecularLight);
 
 	// Set the light position
-	GLfloat qaLightPosition[]	= {.5, .5, 0.0, 1.0};
+	GLfloat qaLightPosition[]	= {0, 0, 0, 1.0};
 	glLightfv(GL_LIGHT0, GL_POSITION, qaLightPosition);
+
+
+
+	// Lighting set up
+
+	glEnable(GL_LIGHT1);
+
+	// Set lighting intensity and color
+	GLfloat qbAmbientLight[]	= {0.4, 0.4, 0.4, 1.0};
+	GLfloat qbDiffuseLight[]	= {0.6, 0.6, 0.6, 1.0};
+	GLfloat qbSpecularLight[]	= {1.0, 1.0, 1.0, 1.0};
+	glLightfv(GL_LIGHT1, GL_AMBIENT, qbAmbientLight);
+	glLightfv(GL_LIGHT1, GL_DIFFUSE, qbDiffuseLight);
+	glLightfv(GL_LIGHT1, GL_SPECULAR, qbSpecularLight);
+
+	// Set the light position
+	GLfloat qbLightPosition[]	= {6.5, 5.5, -4.0, 1.0};
+	glLightfv(GL_LIGHT1, GL_POSITION, qbLightPosition);
 }
 
 /* Program entry point */
