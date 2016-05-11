@@ -1,58 +1,41 @@
 #include "rubik.hpp"
 
-GLuint LoadTextureRAW( const char * filename, int wrap )
+GLuint texture;
+
+void LoadTextureRAW( const char * filename, int wrap )
 {
-    GLuint texture;
     int width, height;
     BYTE * data;
     FILE * file;
 
     // open texture data
     file = fopen( filename, "rb" );
-    if ( file == NULL ) return 0;
+    if ( file != NULL ) {
+        // allocate buffer
+        width = 512;
+        height = 512;
+        data = (BYTE *)malloc( width * height * 3 );
 
-    // allocate buffer
-    width = 256;
-    height = 256;
-    data = (BYTE *)malloc( width * height * 3 );
+        // read texture data
+        fread( data, width * height * 3, 1, file );
+        fclose( file );
 
-    // read texture data
-    fread( data, width * height * 3, 1, file );
-    fclose( file );
+        // build our texture mipmaps
+        gluBuild2DMipmaps( GL_TEXTURE_2D, 3, width, height,
+                           GL_RGB, GL_UNSIGNED_BYTE, data );
 
-    // allocate a texture name
-    glGenTextures( 1, &texture );
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+        glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+        glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE );
 
-    // select our current texture
-    glBindTexture( GL_TEXTURE_2D, texture );
-
-    // select modulate to mix texture with color for shading
-    glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE );
-
-    // when texture area is small, bilinear filter the closest mipmap
-    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-                     GL_LINEAR_MIPMAP_NEAREST );
-    // when texture area is large, bilinear filter the first mipmap
-    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-
-    // if wrap is true, the texture wraps over at the edges (repeat)
-    //       ... false, the texture ends at the edges (clamp)
-    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
-                     wrap ? GL_REPEAT : GL_CLAMP );
-    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
-                     wrap ? GL_REPEAT : GL_CLAMP );
-
-    // build our texture mipmaps
-    gluBuild2DMipmaps( GL_TEXTURE_2D, 3, width, height,
-                       GL_RGB, GL_UNSIGNED_BYTE, data );
-
-    // free buffer
-    free( data );
-
-    return texture;
+        // free buffer
+        free( data );
+    }
 }
-
-GLuint texture1;
 
 GLfloat sisi[][3] = {
     // top left front
@@ -402,14 +385,6 @@ GLfloat color[][3] = {
 
 void polygon(int indexColor, int a, int b, int c, int d) {
 
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, texture1);
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE );
-
     glColor3f(0, 0, 0);
     glLineWidth(3.f);
     glBegin(GL_LINE_LOOP);
@@ -437,8 +412,6 @@ int
     left[3][3] = {{5, 5, 5}, {5, 5, 5}, {5, 5, 5}};
 
 void draw_cube(float angle, float viewX, float viewY, float viewZ, int rotation) {
-
-    texture1 = LoadTextureRAW("texture.raw",false);
 
     // Set material properties
 	GLfloat qaBlack[] = {0.0, 0.0, 0.0, 1.0};
@@ -539,7 +512,7 @@ void draw_cube(float angle, float viewX, float viewY, float viewZ, int rotation)
             polygon(front[1][0],12,13,14,15);
             polygon(front[1][1],16,17,18,19);
             polygon(front[1][2],20,21,22,23);
-            polygon(front[2][0],24,25,26,27);
+            //polygon(front[2][0],24,25,26,27);
 
             // left side cube
             polygon(left[0][0],144,145,146,147);
@@ -960,9 +933,9 @@ void rotateTop(){
     back[2][1] = left[0][1];
     back[2][0] = left[0][2];
 
-    left[0][0] = temp3;
+    left[0][0] = temp1;
     left[0][1] = temp2;
-    left[0][2] = temp1;
+    left[0][2] = temp3;
 }
 
 void rotateBottom(){
@@ -1032,9 +1005,9 @@ void rotateRight(){
     bottom[1][2] = back[1][2];
     bottom[2][2] = back[2][2];
 
-    back[0][2] = temp3;
+    back[0][2] = temp1;
     back[1][2] = temp2;
-    back[2][2] = temp1;
+    back[2][2] = temp3;
 }
 
 void rotateLeft(){
@@ -1092,9 +1065,9 @@ void rotateFront(){
     int temp2 = top[2][1];
     int temp3 = top[2][2];
 
-    top[2][0] = left[0][2];
+    top[2][0] = left[2][2];
     top[2][1] = left[1][2];
-    top[2][2] = left[2][2];
+    top[2][2] = left[0][2];
 
     left[0][2] = bottom[0][0];
     left[1][2] = bottom[0][1];
@@ -1104,9 +1077,9 @@ void rotateFront(){
     bottom[0][1] = right[1][0];
     bottom[0][2] = right[0][0];
 
-    right[2][0] = temp1;
+    right[2][0] = temp3;
     right[1][0] = temp2;
-    right[0][0] = temp3;
+    right[0][0] = temp1;
 }
 
 void rotateBack(){

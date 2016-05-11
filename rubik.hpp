@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <GL/glut.h>
 
-void draw_cube();
 void rotateTop();
 void rotateBottom();
 void rotateLeft();
@@ -13,6 +12,7 @@ void rotateRight();
 void rotateFront();
 void rotateBack();
 
+void LoadTextureRAW( const char * filename, int wrap );
 void draw_cube(float angle, float viewX, float viewY, float viewZ, int rotation);
 
 void draw_front_side_cube();

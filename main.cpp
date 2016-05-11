@@ -234,6 +234,7 @@ int main(int argc, char *argv[])
 
     glEnable(GL_NORMALIZE);
     glEnable(GL_COLOR_MATERIAL);
+    LoadTextureRAW("ben.bmp",false);
 
     glutMainLoop();
 
