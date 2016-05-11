@@ -440,6 +440,15 @@ void draw_cube(float angle, float viewX, float viewY, float viewZ, int rotation)
 
     texture1 = LoadTextureRAW("texture.raw",false);
 
+    // Set material properties
+	GLfloat qaBlack[] = {0.0, 0.0, 0.0, 1.0};
+	GLfloat qaGreen[] = {0.0, 1.0, 0.0, 1.0};
+	GLfloat qaWhite[] = {1.0, 1.0, 1.0, 1.0};
+	glMaterialfv(GL_FRONT, GL_AMBIENT, qaGreen);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, qaGreen);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, qaWhite);
+	glMaterialf(GL_FRONT, GL_SHININESS, 60.0);
+
     glRotatef(0.f + viewX, 1.f, 0.f, 0.f);
     glRotatef(0.f + viewY, 0.f, 1.f, 0.f);
     glRotatef(0.f + viewZ, 0.f, 0.f, 1.f);

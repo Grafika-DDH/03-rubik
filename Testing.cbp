@@ -8,7 +8,7 @@
 		<Build>
 			<Target title="Debug">
 				<Option output="bin/Debug/Testing" prefix_auto="1" extension_auto="1" />
-				<Option working_dir="C:/Program Files (x86)/CodeBlocks/MinGW/bin" />
+				<Option working_dir="E:/Program Files (x86)/CodeBlocks/MinGW/bin" />
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
@@ -18,7 +18,7 @@
 			</Target>
 			<Target title="Release">
 				<Option output="bin/Release/Testing" prefix_auto="1" extension_auto="1" />
-				<Option working_dir="C:/Program Files (x86)/CodeBlocks/MinGW/bin" />
+				<Option working_dir="E:/Program Files (x86)/CodeBlocks/MinGW/bin" />
 				<Option object_output="obj/Release/" />
 				<Option type="0" />
 				<Option compiler="gcc" />
@@ -32,7 +32,7 @@
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
-			<Add directory="C:/Program Files (x86)/CodeBlocks/MinGW/include" />
+			<Add directory="E:/Program Files (x86)/CodeBlocks/MinGW/include" />
 		</Compiler>
 		<Linker>
 			<Add library="freeglut" />
@@ -40,14 +40,9 @@
 			<Add library="glu32" />
 			<Add library="winmm" />
 			<Add library="gdi32" />
-			<Add directory="C:/Program Files (x86)/CodeBlocks/MinGW/lib" />
+			<Add directory="E:/Program Files (x86)/CodeBlocks/MinGW/lib" />
 		</Linker>
-		<Unit filename="draw.cpp" />
-		<Unit filename="draw.hpp" />
 		<Unit filename="main.cpp" />
-		<Unit filename="main2.cpp" />
-		<Unit filename="rubik.cpp" />
-		<Unit filename="rubik.hpp" />
 		<Extensions>
 			<code_completion />
 			<envvars />
